@@ -3,7 +3,6 @@
 #ifndef TEST_path_utils_cc
 
 #include <iostream>
-#include <cmath>
 
 using hfst::StringVector;
 using hfst::implementations::HfstState;
