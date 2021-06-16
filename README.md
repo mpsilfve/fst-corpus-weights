@@ -34,7 +34,7 @@ In case the argument transducer is non-deterministic, `weight_fst` will weight t
 
 You can choose from three weigthing schemes: `PLAIN` (recommended), `PERCEPTRON` and `AVG_PERCEPTRON` (currently unavailable).
 
-You can choose from two string pair formats: `UNALIGNED` where the we feed in a pair of strings and `ALIGNED` where we feed in a sequence of symbol pairs. See Examples 1 and 2 for a description.
+You can choose from two string pair formats: `UNALIGNED` where the examples are given as pairs of strings and `ALIGNED` where we instead feed in sequences of symbol pairs. See Examples 1 and 2 for a description.
 
 `normalize_weights`
 -------------------
@@ -47,7 +47,7 @@ Finally, all weights are converted into tropical weights using the transformatio
 Example 1
 ---------
 
-This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `UNALIGNED` input format.
+This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `UNALIGNED` input format. Each example shuld be a pair of strings.
 
 ```
 $ hfst-fst2txt dog.fst 
@@ -85,7 +85,7 @@ $ hfst-fst2txt dog.weighted.norm.fst
 Example 2
 ---------
 
-This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `ALIGNED` input format. Each example shuld consist of a space-separated sequence of symbol pairs `x:y` or just `x` if the input and output symbol are identical. Epsilon is denoted by `@0@`.
+This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `ALIGNED` input format. Each example should consist of a space-separated sequence of symbol pairs `x:y`, or just `x`, if the input and output symbol are identical. Epsilon is denoted by `@0@`.
 
 ```
 $ hfst-fst2txt dog.fst
