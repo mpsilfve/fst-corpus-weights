@@ -34,7 +34,7 @@ In case the argument transducer is non-deterministic, `weight_fst` will weight t
 
 You can choose from three weigthing schemes: `PLAIN` (recommended), `PERCEPTRON` and `AVG_PERCEPTRON` (currently unavailable).
 
-You can choose from two string pair formats: `UNALIGNED` where the we feed in a pair of strings and `ALIGNED` where we feed in a sequence of symbol pairs. See Examples 1 and 2 for a description.
+You can choose from two string pair formats: `UNALIGNED` where the examples are given as pairs of strings and `ALIGNED` where we instead feed in sequences of symbol pairs. See Examples 1 and 2 for a description.
 
 `normalize_weights`
 -------------------
