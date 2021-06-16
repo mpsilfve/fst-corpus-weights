@@ -28,7 +28,7 @@ The utility `weight_fst` reads `word_form<TAB>analysis` string pairs from `STDIN
 
 Usage of `weight_fst`:
 
-`USAGE: cat string_pairs | ./weight_fst input_fst_file output_fst_file [PLAIN | PERCEPTRON | AVG_PERCEPTRON]`
+`USAGE: cat string_pairs | ./weight_fst input_fst_file output_fst_file [PLAIN | PERCEPTRON | AVG_PERCEPTRON] [UNALIGNED | ALIGNED]`
 
 In case the argument transducer is non-deterministic, `weight_fst` will weight the *first path that it finds* corresponding the a string pair. 
 
