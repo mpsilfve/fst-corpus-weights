@@ -39,8 +39,7 @@ bool align_paths(StringVector::const_iterator it,
 
 bool incr_path_weight(HfstTwoLevelPath &aligned_path, 
 		      HfstBasicTransducer &bfst,
-		      float increment = 1,
-		      bool skip_flags = false);
+		      float increment = 1);
 
 bool is_matching_pair(const std::string &in1, const std::string &in2,
 		      const std::string &out1, const std::string &out2);

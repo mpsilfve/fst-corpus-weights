@@ -31,18 +31,33 @@ using hfst::StringSet;
 //
 // When adding types, remember to edit BOTH WeightType AND weighters.
 enum WeightedType
-  { PLAIN, PERCEPTRON, AVG_PERCEPTRON, NO_TYPE };
+  { PLAIN, PERCEPTRON, AVG_PERCEPTRON, NO_WTYPE };
 
 StringVector weighters { "PLAIN", "PERCEPTRON", "AVG_PERCEPTRON" };
 
+enum PairType
+  { UNALIGNED, ALIGNED, NO_PTYPE };
+
+StringVector pairers { "UNALIGNED", "ALIGNED" };
+
 WeightedType get_weighted_type(const std::string param)
 {
-  for (int type = 0; type < NO_TYPE; ++type)
+  for (int type = 0; type < NO_WTYPE; ++type)
     {
       if (param == weighters[type])
 	{ return static_cast<WeightedType>(type); }
     }
-  return NO_TYPE;
+  return NO_WTYPE;
+}
+
+PairType get_pair_type(const std::string param)
+{
+  for (int type = 0; type < NO_PTYPE; ++type)
+    {
+      if (param == pairers[type])
+	{ return static_cast<PairType>(type); }
+    }
+  return NO_PTYPE;
 }
 
 void print_usage(const std::string &prog_name)
@@ -54,23 +69,47 @@ void print_usage(const std::string &prog_name)
   for (size_t i = 0; i < weighters.size(); ++i)
     {
       std::cerr << weighters[i] 
-		<< (i + 1 == weighters.size() ? "]" : " | ");
+		<< (i + 1 == weighters.size() ? "] [" : " | ");
     }
+
+  for (size_t i = 0; i < pairers.size(); ++i)
+    {
+      std::cerr << pairers[i] 
+		<< (i + 1 == pairers.size() ? "]" : " | ");
+    }
+
   std::cerr << std::endl;
+}
+
+void weight_char_pair_string(const CharPairVector &fields, 
+			     HfstBasicTransducer &bfst, 
+			     WeightedType &wtype)
+{
+  HfstTwoLevelPath p;
+  p.first = 0;
+  for (unsigned int i = 0; i < fields.size(); ++i)
+    { p.second.push_back(fields[i]); }
+
+  if (wtype == PLAIN)
+    { incr_path_weight(p, bfst, 1.0, true); }
+  else
+    {
+      // FIXME: Handle perceptron weights.
+      assert(0);
+    }
 }
 
 void weight_string_pair(const StringVector &fields, 
 			HfstBasicTransducer &bfst, 
-			const HfstTransducer &fst,
 			const HfstTokenizer &tok,
 			WeightedType &wtype)
 {
   const std::string &inputstr  = fields[0];
   const std::string &outputstr = fields[1];
 
-  //  HfstOneLevelPaths * paths = fst.lookup_fd(inputstr);
   HfstTwoLevelPaths paths;
   bfst.lookup(tok.tokenize_one_level(inputstr), paths, NULL, NULL, true);
+
   HfstOneLevelPath match;
   if (not get_first_match(paths, outputstr, match) and MISSING)
     { 
@@ -79,7 +118,6 @@ void weight_string_pair(const StringVector &fields,
 		<< "Skipping!" << std::endl << std::endl; 
       return;
     }
-  std::cout << "gfs sto" << std::endl;
   // Tokenize input string into utf8 symbols.
   StringVector inputtok = tok.tokenize_one_level(inputstr);
 
@@ -105,41 +143,20 @@ void weight_string_pair(const StringVector &fields,
   // final state.
   else if (wtype == PLAIN)
     { incr_path_weight(aligned_path, bfst, 1.0); }
-  std::cout << "stop" << std::endl;
 }
 
-int main(int argc, char * argv[])
+void weight_unaligned(HfstTransducer & fst, 
+		      HfstBasicTransducer & bfst, 
+		      WeightedType wtype)
 {
-  WeightedType wtype;
-
-  if (argc != 4 or (wtype = get_weighted_type(argv[3])) == NO_TYPE)
-    {
-      print_usage(argv[0]);
-      exit(1);
-    }
-  if (wtype == AVG_PERCEPTRON)
-    {
-      std::cerr << "Error: Averaged perceptron estimation not implemented."
-		<< std::endl;
-      exit(1);      
-    }
-  
-  std::cerr << "Reading input fst from " << argv[1] << "."
-	    << std::endl;
-  HfstInputStream in(argv[1]);
-  HfstTransducer fst(in);
-
   // FIXME: Doesn't know how to tokenize input multichar symbols!
   HfstTokenizer tok;
-
   StringSet alphabet = fst.get_alphabet();
   for (const std::string & s : alphabet)
     { tok.add_multichar_symbol(s); }
-
-  HfstBasicTransducer bfst(fst);
-
+  
   StreamReader stdin_reader;
-  std::cerr << "Reading string pairs from STDIN."
+  std::cerr << "Reading input from STDIN."
 	    << std::endl;
   std::vector<StringVector> lines;
   while(stdin_reader.readline())
@@ -170,18 +187,92 @@ int main(int argc, char * argv[])
   
   for (int i = 0; i < 1; ++i)
     {
-      std::cerr << "Epoch " << i << std::endl;
-
+      std::cerr << "Epoch " << i+1 << std::endl;
+      
       for (size_t j = 0; j < lines.size(); ++j)
-	   
+	
 	{ 
 	  std::cerr << j + 1 << " of " << lines.size() << "\r";
- 
+	  
 	  const StringVector &fields = lines[j];
-	  weight_string_pair(fields, bfst, fst, tok, wtype); 
+	  weight_string_pair(fields, bfst, tok, wtype); 
 	}
       std::cerr << std::endl;
     }
+}
+
+void weight_aligned(HfstTransducer & fst, 
+		    HfstBasicTransducer & bfst, 
+		    WeightedType wtype)
+{
+  static_cast<void>(fst);
+
+  StreamReader stdin_reader;
+  std::cerr << "Reading input from STDIN."
+	    << std::endl;
+
+  std::vector<CharPairVector> lines;
+
+  while(stdin_reader.readline())
+    {
+      const std::string &line = stdin_reader.getline();
+      
+      // Skip empty lines.
+      if (line == "")
+	{ continue; }
+
+      CharPairVector char_pairs;
+      read_char_pairs(line, char_pairs);
+      lines.push_back(char_pairs);
+    }
+
+  for (int i = 0; i < 1; ++i)
+    {
+      std::cerr << "Epoch " << i+1 << std::endl;
+      
+      for (size_t j = 0; j < lines.size(); ++j)
+	
+	{ 
+	  std::cerr << j + 1 << " of " << lines.size() << "\r";
+	  
+	  const CharPairVector &fields = lines[j];
+	  weight_char_pair_string(fields, bfst, wtype); 
+	}
+      std::cerr << std::endl;
+    }
+}
+
+int main(int argc, char * argv[])
+{
+  WeightedType wtype;
+  PairType ptype;
+
+  if (argc != 5 or 
+      (wtype = get_weighted_type(argv[3])) == NO_WTYPE or
+      (ptype = get_pair_type(argv[4])) == NO_PTYPE)
+    {
+      std::cerr << argv[3] << get_weighted_type(argv[3]) << std::endl;
+      std::cerr << argv[4] << get_pair_type(argv[4]) << std::endl;
+      print_usage(argv[0]);
+      exit(1);
+    }
+  if (wtype == AVG_PERCEPTRON)
+    {
+      std::cerr << "Error: Averaged perceptron estimation not implemented."
+		<< std::endl;
+      exit(1);      
+    }
+  
+  std::cerr << "Reading input fst from " << argv[1] << "."
+	    << std::endl;
+  HfstInputStream in(argv[1]);
+  HfstTransducer fst(in);
+  HfstBasicTransducer bfst(fst);
+
+  if (ptype == ALIGNED)
+    { weight_aligned(fst,bfst,wtype); }
+  else
+    { weight_unaligned(fst,bfst,wtype); }
 
   std::cerr << "Writing weighted fst to " << argv[2] << std::endl;
   HfstTransducer res(bfst, TROPICAL_OPENFST_TYPE);

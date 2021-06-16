@@ -2,8 +2,6 @@
 
 #ifndef TEST_path_utils_cc
 
-#include "string_utils.hh"
-
 #include <iostream>
 #include <cmath>
 
@@ -167,8 +165,7 @@ bool align_paths(const HfstOneLevelPath &in,
 bool incr_path_weight(StringPairVector::const_iterator it,
 		      StringPairVector::const_iterator end,
 		      HfstState s, HfstBasicTransducer &bfst,
-		      float increment,
-		      bool skip_flags)
+		      float increment)
 { 
   if (it == end)
     { 
@@ -178,19 +175,16 @@ bool incr_path_weight(StringPairVector::const_iterator it,
 	  return 1; 
 	}
       else
-	{ 
-	  return 0; 
-	}
+	{ return 0; }
     }
 
-  // Check non-flag transitions.
   for (HfstBasicTransition &t : bfst.transitions(s))
     {      
       if (t.get_input_symbol() == it->first and 
 	  t.get_output_symbol() == it->second)
 	{ 
 	  if (incr_path_weight(it + 1, end, t.get_target_state(), 
-			       bfst, increment, skip_flags))
+			       bfst, increment))
 	    {
 	      t.set_weight(t.get_weight() + increment);
 
@@ -198,38 +192,18 @@ bool incr_path_weight(StringPairVector::const_iterator it,
 	    }
 	}
     }
-
-  if (skip_flags)
-    {
-      // Check flag transitions as fallback.
-      for (HfstBasicTransition &t : bfst.transitions(s))
-	{      
-	  if (is_flag_diacritic(t.get_input_symbol()) and 
-	      is_flag_diacritic(t.get_output_symbol()))
-	    { 
-	      if (incr_path_weight(it, end, t.get_target_state(), 
-				   bfst, increment, skip_flags))
-		{
-		  t.set_weight(t.get_weight() + increment);
-		  
-		  return 1;
-		}
-	    }
-	}
-    }
-
+  
   // Didn't find a suitable transition.
   return 0;
 }
 
 bool incr_path_weight(HfstTwoLevelPath &aligned_path, 
 		      HfstBasicTransducer &bfst,
-		      float increment,
-		      bool skip_flags)
+		      float increment)
 { 
   return incr_path_weight(aligned_path.second.begin(),
 			  aligned_path.second.end(),
-			  0, bfst, increment,skip_flags); 
+			  0, bfst, increment); 
 }
 
 void get_heaviest_path(const HfstOneLevelPaths &paths, 
