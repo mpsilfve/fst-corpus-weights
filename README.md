@@ -32,6 +32,10 @@ Usage of `weight_fst`:
 
 In case the argument transducer is non-deterministic, `weight_fst` will weight the *first path that it finds* corresponding the a string pair. 
 
+You can choose from three weigthing schemes: `PLAIN` (recommended), `PERCEPTRON` and `AVG_PERCEPTRON` (currently unavailable).
+
+You can choose from two string pair formats: `UNALIGNED` where the we feed in a pair of strings and `ALIGNED` where we feed in a sequence of symbol pairs. See Examples 1 and 2 for a description.
+
 `normalize_weights`
 -------------------
 
@@ -40,36 +44,77 @@ It then normalizes each state `s` by dividing each transition weight and the fin
 
 Finally, all weights are converted into tropical weights using the transformation x -> -log(x).
 
-Example
--------
+Example 1
+---------
 
-This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format.
+This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `UNALIGNED` input format.
 
-    $ hfst-fst2txt dog.hfst 
-    0	1	d	d	0.000000
-    1	2	o	o	0.000000
-    2	3	g	g	0.000000
-    3	4	@0@	+N	0.000000
-    3	4	@0@	+V	0.000000
-    4	0.000000
-   
-    $ cat dog_pairs 
-    dog	dog+N
-    dog	dog+N
-    dog	dog+V
+```
+$ hfst-fst2txt dog.fst 
+0	1	d	d	0.000000
+1	2	o	o	0.000000
+2	3	g	g	0.000000
+3	4	@0@	+N	0.000000
+3	4	@0@	+V	0.000000
+4	0.000000
 
-    $ cat dog_pairs | ./weight_fst dog.hfst dog.weighted.hfst PLAIN
-    Reading input fst from dog.hfst.
-    Reading string pairs from STDIN.
-    Writing weighted fst to dog.weighted.hfst
+$ cat example/dog_pairs
+dog	dog+N
+dog	dog+N
+dog	dog+V
 
-    $ ./normalize_weights dog.weighted.hfst dog.weighted.hfst.norm
-    $ hfst-fst2txt dog.weighted.hfst.norm 
-    0	1	d	d	-0.000000
-    1	2	o	o	-0.000000
-    2	3	g	g	-0.000000
-    3	4	@0@	+N	0.510826
-    3	4	@0@	+V	0.916291
-    4	-0.000000
+$ cat dog_pairs | ./weight_fst dog.fst dog.weighted.fst PLAIN ALIGNED
 
-    $ hfst-fst2fst -w dog.weighted.hfst.norm -o dog.distribution.hfst
+Reading input fst from dog.fst.
+Reading input from STDIN.
+Epoch 1
+3 of 3
+Writing weighted fst to dog.weighted.fst
+
+$ ./normalize_weights dog.weighted.fst dog.weighted.norm.fst 
+
+$ hfst-fst2txt dog.weighted.norm.fst 
+0	1	d	d	-0.000000
+1	2	o	o	-0.000000
+2	3	g	g	-0.000000
+3	4	@0@	+N	0.510826
+3	4	@0@	+V	0.916291
+4	-0.000000
+```
+
+Example 2
+---------
+
+This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `ALIGNED` input format. Each example shuld consist of a space-separated sequence of symbol pairs `x:y` or just `x` if the input and output symbol are identical. Epsilon is denoted by `@0@`.
+
+```
+$ hfst-fst2txt dog.fst
+0	1	d	d	0.000000
+1	2	o	o	0.000000
+2	3	g	g	0.000000
+3	4	@0@	+N	0.000000
+3	4	@0@	+V	0.000000
+4	0.000000
+
+$ cat dog_pair_strings
+d o g @0@:+N
+d o g @0@:+N
+d o g @0@:+V
+
+$ cat dog_pair_strings | ./weight_fst dog.fst dog.weighted.fst PLAIN ALIGNED
+Reading input fst from dog.fst.
+Reading input from STDIN.
+Epoch 1
+3 of 3
+Writing weighted fst to dog.weighted.fst
+
+$ ./normalize_weights dog.weighted.fst dog.weighted.norm.fst 
+
+$ hfst-fst2txt dog.weighted.norm.fst 
+0	1	d	d	-0.000000
+1	2	o	o	-0.000000
+2	3	g	g	-0.000000
+3	4	@0@	+N	0.510826
+3	4	@0@	+V	0.916291
+4	-0.000000
+```
