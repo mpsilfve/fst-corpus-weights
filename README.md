@@ -47,7 +47,7 @@ Finally, all weights are converted into tropical weights using the transformatio
 Example 1
 ---------
 
-This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `UNALIGNED` input format.
+This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `UNALIGNED` input format. Each example shuld be a pair of strings.
 
 ```
 $ hfst-fst2txt dog.fst 
@@ -85,7 +85,7 @@ $ hfst-fst2txt dog.weighted.norm.fst
 Example 2
 ---------
 
-This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `ALIGNED` input format. Each example shuld consist of a space-separated sequence of symbol pairs `x:y` or just `x` if the input and output symbol are identical. Epsilon is denoted by `@0@`.
+This is an example where a small analyzer is transformed into a weighted transducer and converted into optimized lookup format using the `ALIGNED` input format. Each example should consist of a space-separated sequence of symbol pairs `x:y`, or just `x`, if the input and output symbol are identical. Epsilon is denoted by `@0@`.
 
 ```
 $ hfst-fst2txt dog.fst
